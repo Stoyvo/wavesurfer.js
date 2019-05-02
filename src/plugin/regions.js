@@ -28,6 +28,7 @@ class Region {
         this.color = params.color || 'rgba(0, 0, 0, 0.1)';
         this.data = params.data || {};
         this.attributes = params.attributes || {};
+        this.width = params.width || ws.regions.params.width || false;
 
         this.maxLength = params.maxLength;
         this.minLength = params.minLength;
@@ -76,6 +77,9 @@ class Region {
         if (null != params.attributes) {
             this.attributes = params.attributes;
         }
+        if (null != params.width) {
+            this.width = params.width;
+        }
 
         this.updateRender();
         this.fireEvent('update');
@@ -95,8 +99,10 @@ class Region {
     }
 
     /* Play the audio region. */
-    play() {
-        this.wavesurfer.play(this.start, this.end);
+    play(end = 0) {
+        end = end > 0 ? end : this.end; // Allow region to play for X duration, otherwise use defined
+
+        this.wavesurfer.play(this.start, end);
         this.fireEvent('play');
         this.wavesurfer.fireEvent('region-play', this);
     }
@@ -105,6 +111,13 @@ class Region {
     playLoop() {
         this.play();
         this.once('out', () => this.playLoop());
+    }
+
+    /* Seek to this region */
+    seekTo() {
+        var progress = Math.max(0, Math.min(this.wavesurfer.getDuration(), this.start));
+        this.wavesurfer.seekTo(progress  / this.wavesurfer.getDuration());
+        this.wavesurfer.fireEvent('interaction', this);
     }
 
     /* Render a region as a DOM element. */
@@ -121,7 +134,6 @@ class Region {
             );
         }
 
-        const width = this.wrapper.scrollWidth;
         this.style(regionEl, {
             position: 'absolute',
             zIndex: 2,
@@ -204,7 +216,20 @@ class Region {
             // Calculate the left and width values of the region such that
             // no gaps appear between regions.
             const left = Math.round((startLimited / dur) * width);
-            const regionWidth = Math.round((endLimited / dur) * width) - left;
+
+            // Set width to defined region width (param)
+            var regionWidth = this.width;
+
+            // Set width based on region duration
+            if (endLimited > 0) {
+                var pxPerSec = width / dur;
+                regionWidth = ((this.end - this.start) * pxPerSec);
+            }
+
+            // If no region param or region duration set, calculate width values
+            if (!regionWidth) {
+                regionWidth = Math.round((endLimited / dur) * width) - left;
+            }
 
             this.style(this.element, {
                 left: left + 'px',
