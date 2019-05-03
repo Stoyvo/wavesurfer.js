@@ -235,7 +235,8 @@ class Region {
                 left: left + 'px',
                 width: regionWidth + 'px',
                 backgroundColor: this.color,
-                cursor: this.drag ? 'move' : 'default'
+                cursor: this.drag ? 'move' : 'default',
+                zIndex: 4
             });
 
             for (const attrname in this.attributes) {

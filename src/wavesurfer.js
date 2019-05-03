@@ -716,7 +716,10 @@ export default class WaveSurfer extends util.Observer {
      */
     play(start, end) {
         this.fireEvent('interaction', () => this.play(start, end));
-        return this.backend.play(start, end);
+        this.backend.play(start, end);
+        if (this.params.seekToCenter) {
+            this.drawer.recenter(this.getCurrentTime() / this.getDuration());
+        }
     }
 
     /**

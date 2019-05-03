@@ -178,7 +178,7 @@ export default class Drawer extends util.Observer {
      * @param {number} percent Value from 0 to 1 on the waveform
      */
     recenter(percent) {
-        const position = this.wrapper.scrollWidth * percent;
+        const position = ~~(this.wrapper.scrollWidth * percent);
         this.recenterOnPosition(position, true);
     }
 
@@ -312,7 +312,7 @@ export default class Drawer extends util.Observer {
 
             if (this.params.scrollParent && this.params.autoCenter) {
                 const newPos = ~~(this.wrapper.scrollWidth * progress);
-                this.recenterOnPosition(newPos);
+                this.recenterOnPosition(newPos, true);
             }
 
             this.updateProgress(pos);
