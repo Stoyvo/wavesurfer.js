@@ -214,11 +214,13 @@ export default class WaveSurfer extends util.Observer {
             window.devicePixelRatio || screen.deviceXDPI / screen.logicalXDPI,
         plugins: [],
         progressColor: '#555',
+        progressEdge: true,
         removeMediaElementOnDestroy: true,
         renderer: MultiCanvas,
         responsive: false,
         rtl: false,
         scrollParent: false,
+        seekToCenter: false,
         skipLength: 2,
         splitChannels: false,
         waveColor: '#999',
@@ -714,7 +716,10 @@ export default class WaveSurfer extends util.Observer {
      */
     play(start, end) {
         this.fireEvent('interaction', () => this.play(start, end));
-        return this.backend.play(start, end);
+        this.backend.play(start, end);
+        if (this.params.seekToCenter) {
+            this.drawer.recenter(this.getCurrentTime() / this.getDuration());
+        }
     }
 
     /**
@@ -840,6 +845,10 @@ export default class WaveSurfer extends util.Observer {
         }
         this.params.scrollParent = oldScrollParent;
         this.fireEvent('seek', progress);
+
+        if (this.params.seekToCenter) {
+            this.drawer.recenter(progress);
+        }
     }
 
     /**
@@ -1179,10 +1188,26 @@ export default class WaveSurfer extends util.Observer {
      *
      * @private
      * @param {ArrayBuffer} arraybuffer
+     * @param {?number} offset
      */
-    loadArrayBuffer(arraybuffer) {
+    loadArrayBuffer(arraybuffer, offset) {
         this.decodeArrayBuffer(arraybuffer, data => {
             if (!this.isDestroyed) {
+                if (offset > 0) {
+                    let numberOfChannels = data.numberOfChannels;
+
+                    let offsetBuffer = this.backend.offlineAc.createBuffer(numberOfChannels, offset, data.sampleRate);
+
+                    let newData = this.backend.ac.createBuffer(numberOfChannels, ((offsetBuffer.duration * 10000) + data.length), data.sampleRate);
+                    for (let i = 0; i < numberOfChannels; i++) {
+                        let channel = newData.getChannelData(i);
+                        channel.set(offsetBuffer.getChannelData(i), 0);
+                        channel.set(data.getChannelData(i), offsetBuffer.duration * 10000);
+                    }
+
+                    data = newData;
+                }
+
                 this.loadDecodedBuffer(data);
             }
         });
@@ -1247,7 +1272,7 @@ export default class WaveSurfer extends util.Observer {
      *   true
      * );
      */
-    load(url, peaks, preload, duration) {
+    load(url, peaks, preload, duration, offset) {
         this.empty();
 
         if (preload) {
@@ -1276,7 +1301,7 @@ export default class WaveSurfer extends util.Observer {
 
         switch (this.params.backend) {
             case 'WebAudio':
-                return this.loadBuffer(url, peaks, duration);
+                return this.loadBuffer(url, peaks, duration, offset);
             case 'MediaElement':
                 return this.loadMediaElement(url, peaks, preload, duration);
         }
@@ -1289,13 +1314,14 @@ export default class WaveSurfer extends util.Observer {
      * @param {string} url
      * @param {?number[]|number[][]} peaks
      * @param {?number} duration
+     * @param {?number} offset
      */
-    loadBuffer(url, peaks, duration) {
+    loadBuffer(url, peaks, duration, offset) {
         const load = action => {
             if (action) {
                 this.tmpEvents.push(this.once('ready', action));
             }
-            return this.getArrayBuffer(url, data => this.loadArrayBuffer(data));
+            return this.getArrayBuffer(url, data => this.loadArrayBuffer(data, offset));
         };
 
         if (peaks) {

@@ -225,9 +225,12 @@ export default class MinimapPlugin {
 
         Object.keys(this.regions).forEach(id => {
             const region = this.regions[id];
-            const width =
+            var width =
                 this.drawer.width *
                 ((region.end - region.start) / this.wavesurfer.getDuration());
+                if (width <= 0) {
+                    width = 1;
+                }
             const left =
                 this.drawer.width *
                 (region.start / this.wavesurfer.getDuration());
@@ -239,7 +242,8 @@ export default class MinimapPlugin {
                     width: width + 'px',
                     left: left + 'px',
                     display: 'block',
-                    position: 'absolute'
+                    position: 'absolute',
+                    zIndex: 4
                 }
             );
             regionElement.classList.add(id);
