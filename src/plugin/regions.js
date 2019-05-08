@@ -623,13 +623,6 @@ export default class RegionsPlugin {
             deferInit: params && params.deferInit ? params.deferInit : false,
             params: params,
             staticProps: {
-                initRegions() {
-                    console.warn(
-                        'Deprecated initRegions! Use wavesurfer.initPlugins("regions") instead!'
-                    );
-                    this.initPlugin('regions');
-                },
-
                 addRegion(options) {
                     if (!this.initialisedPluginList.regions) {
                         this.initPlugin('regions');
@@ -715,7 +708,7 @@ export default class RegionsPlugin {
     /**
      * Add a region
      *
-     * @param {object} params
+     * @param {object} params Region parameters
      * @return {Region} The created region
      */
     add(params) {
@@ -899,6 +892,8 @@ export default class RegionsPlugin {
      *
      * The smallest region that contains the current time. If several such
      * regions exist, take the first. Return `null` if none exist.
+     *
+     * @returns {Region} The current region
      */
     getCurrentRegion() {
         const time = this.wavesurfer.getCurrentTime();
@@ -924,6 +919,7 @@ export default class RegionsPlugin {
      *
      * @param {number} value the value to snap to the grid, if needed
      * @param {Object} params the regions plugin params
+     * @returns {number} value
      */
     getRegionSnapToGridValue(value, params) {
         if (params.snapToGridInterval) {
