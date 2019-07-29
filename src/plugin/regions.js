@@ -318,7 +318,6 @@ class Region {
         (this.drag || this.resize) &&
             (() => {
                 const container = this.wavesurfer.drawer.container;
-                const duration = this.wavesurfer.getDuration();
                 const scrollSpeed = this.scrollSpeed;
                 const scrollThreshold = this.scrollThreshold;
                 let startTime;
@@ -332,6 +331,7 @@ class Region {
 
                 // Scroll when the user is dragging within the threshold
                 const edgeScroll = e => {
+                    const duration = this.wavesurfer.getDuration();
                     if (!scrollDirection || (!drag && !resize)) {
                         return;
                     }
@@ -361,6 +361,7 @@ class Region {
                 };
 
                 const onDown = e => {
+                    const duration = this.wavesurfer.getDuration();
                     if (e.touches && e.touches.length > 1) {
                         return;
                     }
@@ -418,6 +419,8 @@ class Region {
                     }
                 };
                 const onMove = e => {
+                    const duration = this.wavesurfer.getDuration();
+
                     if (e.touches && e.touches.length > 1) {
                         return;
                     }
