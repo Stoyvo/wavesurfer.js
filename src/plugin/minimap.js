@@ -35,6 +35,9 @@
  * });
  */
 export default class MinimapPlugin {
+    isMouseDown = false;
+    mouseDownTime = 0;
+
     /**
      * Minimap plugin definition factory
      *
@@ -294,16 +297,33 @@ export default class MinimapPlugin {
         // this.unAll() and nullifying the DOM node references after
         // removing them
         if (this.params.interact) {
-            this.drawer.wrapper.addEventListener('click', event => {
-                this.fireEvent('click', event, this.drawer.handleEvent(event));
+            this.drawer.wrapper.addEventListener('mousemove', event => {
+                if (this.isMouseDown) {
+                    let elapsed = Date.now() - this.mouseDownTime;
+                    if (elapsed >= 100) {
+                        this.mouseDownTime = Date.now();
+                        this.fireEvent('mousemove', event, this.drawer.handleEvent(event));
+                    }
+                }
             });
 
-            this.on('click', (event, position) => {
-                if (seek) {
-                    this.drawer.progress(position);
-                    this.wavesurfer.seekAndCenter(position);
-                } else {
-                    seek = true;
+            this.drawer.wrapper.addEventListener('mousedown', event => {
+                this.isMouseDown = true;
+                this.mouseDownTime = Date.now();
+                this.fireEvent('mousemove', event, this.drawer.handleEvent(event));
+            });
+            document.addEventListener('mouseup', (event) => {
+                this.isMouseDown = false;
+            });
+
+            this.on('mousemove', (event, position) => {
+                if (this.isMouseDown) {
+                    if (seek) {
+                        this.drawer.progress(position);
+                        this.wavesurfer.seekAndCenter(position);
+                    } else {
+                        seek = true;
+                    }
                 }
             });
         }
