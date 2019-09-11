@@ -29,6 +29,7 @@ class Region {
         this.data = params.data || {};
         this.attributes = params.attributes || {};
         this.width = params.width || ws.regions.params.width || false;
+        this.triggerRedraw = true; // Used to stop trigger to redraw of cue points
 
         this.maxLength = params.maxLength;
         this.minLength = params.minLength;
@@ -81,9 +82,15 @@ class Region {
             this.width = params.width;
         }
 
+        if (null != params.triggerRedraw) {
+            this.triggerRedraw = params.triggerRedraw;
+        }
+
         this.updateRender();
+
         this.fireEvent('update');
         this.wavesurfer.fireEvent('region-updated', this);
+        this.triggerRedraw = true;
     }
 
     /* Remove a single region. */
